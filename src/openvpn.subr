@@ -1,0 +1,27 @@
+#! /bin/bash
+openvpn_up() {
+    [[ -z "$OVPN_CONFIG" ]] && OVPN_CONFIG="/etc/openvpn/openvpn.conf"
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
+
+    OVPN_CONF_DIR="`dirname $OVPN_CONFIG`"
+    OVPN_CONF_FILE="`basename $OVPN_CONFIG`"
+
+    /usr/sbin/openvpn --writepid $OVPN_PID_FILE --daemon --cd "$OVPN_CONF_DIR" --config "$OVPN_CONF_FILE"
+
+    if [[ $? -ne 0 ]]; then
+       err_append "OpenVPN connection failed"
+       exit 1
+    fi
+}
+
+openvpn_down() {
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
+
+    kill $(head -1 $OVPN_PID_FILE)
+    rm $OVPN_PID_FILE
+}
+
+openvpn_clean_scope() {
+    unset OVPN_CONFIG OVPN_PID_FILE OVPN_CONF_DIR OVPN_CONF_FILE
+}
+# vim: set ts=4 et sw=4:
