@@ -1,5 +1,8 @@
 #! /bin/bash
+. /usr/lib/network/network
+
 openvpn_up() {
+    load_profile $1
     [[ -z "$OVPN_CONFIG" ]] && OVPN_CONFIG="/etc/openvpn/openvpn.conf"
     [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
 
@@ -15,13 +18,13 @@ openvpn_up() {
 }
 
 openvpn_down() {
+    load_profile $1
     [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
 
     kill $(head -1 $OVPN_PID_FILE)
     rm $OVPN_PID_FILE
 }
 
-openvpn_clean_scope() {
-    unset OVPN_CONFIG OVPN_PID_FILE OVPN_CONF_DIR OVPN_CONF_FILE
-}
+openvpn_$1 $2
+exit $?
 # vim: set ts=4 et sw=4:
