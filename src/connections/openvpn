@@ -15,6 +15,25 @@ openvpn_up() {
        err_append "OpenVPN connection failed"
        exit 1
     fi
+
+    # Generate a new resolv.conf
+    if [[ -n "$DNS" ]]; then
+        [[ -e /etc/resolv.conf ]] && cp /etc/resolv.conf /tmp/openvpn-$1-resolv.conf
+        : >/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+
+        for dns in "${DNS[@]}"; do
+            echo "nameserver $dns" >>/etc/resolv.conf
+        done
+    elif [[ -n "$DNS1" ]]; then # support older 'ethernet' syntax.
+        [[ -e /etc/resolv.conf ]] && cp /etc/resolv.conf /tmp/openvpn-$1-resolv.conf
+        : >/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
+        [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
+    fi
 }
 
 openvpn_down() {
@@ -23,6 +42,9 @@ openvpn_down() {
 
     kill $(head -1 $OVPN_PID_FILE)
     rm $OVPN_PID_FILE
+
+    # Restore an old resolv.conf
+    [[ -e /tmp/openvpn-$1-resolv.conf ]] && mv -f /tmp/openvpn-$1-resolv.conf /etc/resolv.conf
 }
 
 openvpn_$1 $2
