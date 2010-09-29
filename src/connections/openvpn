@@ -44,7 +44,9 @@ openvpn_down() {
     rm $OVPN_PID_FILE
 
     # Restore an old resolv.conf
-    [[ -e /tmp/openvpn-$1-resolv.conf ]] && mv -f /tmp/openvpn-$1-resolv.conf /etc/resolv.conf
+    if [[ -e /tmp/openvpn-$1-resolv.conf ]]; then
+        mv -f /tmp/openvpn-$1-resolv.conf /etc/resolv.conf
+    fi
 }
 
 openvpn_$1 $2
