@@ -4,7 +4,8 @@
 openvpn_up() {
     load_profile $1
     [[ -z "$OVPN_CONFIG" ]] && OVPN_CONFIG="/etc/openvpn/openvpn.conf"
-    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/var/run/openvpn-$1.pid"
+    [[ -z "$OVPN_FLAGS" ]] && OVPN_FLAGS=""
 
     OVPN_CONF_DIR="`dirname $OVPN_CONFIG`"
     OVPN_CONF_FILE="`basename $OVPN_CONFIG`"
@@ -38,7 +39,7 @@ openvpn_up() {
 
 openvpn_down() {
     load_profile $1
-    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/tmp/openvpn.pid"
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/var/run/openvpn-$1.pid"
 
     kill $(head -1 $OVPN_PID_FILE)
     rm $OVPN_PID_FILE
