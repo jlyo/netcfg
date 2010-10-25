@@ -23,16 +23,18 @@ IPCFG
 IFOPTS (deprecated, requires IP of 'static')
 :   Arguments to pass to 'ifconfig'. This allows you to use the syntax for the older 'ifconfig' tool. Retained for compatability. 
 ### DNS
+RESOLV_CONF
+:   Path to resolver configuration. Defaults to /etc/resolv.conf
 DNS
 :   Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers. 
 SEARCH
-:   "search" line for /etc/resolv.conf
+:   "search" line for RESOLV_CONF
 DOMAIN
-:   "domain" line for /etc/resolv.conf
+:   "domain" line for RESOLV_CONF
 HOSTNAME
 :   Set the system hostname. Ensure any hostname is correctly referenced in /etc/hosts.
 DNS1, DNS2 (deprecated)
-:   First and second DNS servers for /etc/resolv.conf
+:   First and second DNS servers for RESOLV_CONF
 ### DHCP
 DHCP_OPTIONS
 :   String. Any extra arguments to pass to the dhcp client, presently dhcpcd.
