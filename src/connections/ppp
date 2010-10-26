@@ -1,13 +1,61 @@
 #! /bin/bash
 . /usr/lib/network/network
 
+# TODO: Support authentication
+make_ppp_config() {
+    local chat_script="/etc/ppp/chatscripts/$PEER"
+    [[ -z "$CONNECT_TIMEOUT" ]] && CONNECT_TIMEOUT=30
+    [[ ! -d /etc/ppp/chatscripts ]] && mkdir -p /etc/ppp/chatscripts
+    cat > "$chat_script" << NETCFGEOF
+ABORT 'BUSY'
+ABORT 'NO CARRIER'
+ABORT 'VOICE'
+ABORT 'NO DIALTONE'
+ABORT 'NO DIAL TONE'
+ABORT 'NO ANSWER'
+ABORT 'DELAYED'
+REPORT CONNECT
+TIMEOUT 5
+NETCFGEOF
+
+    local expected=''
+    for line in "${INIT[@]}"; do
+        echo "'$expected' '$line'" >> "$chat_script"
+        expected='OK'
+    done
+    echo "'$expected' 'ATDT$PHONE'" >> "$chat_script"
+    echo "TIMEOUT $CONNECT_TIMEOUT" >> "$chat_script"
+    echo "'CONNECT' ''" >> "$chat_script"
+
+    local peer_file="/etc/ppp/peers/$PEER"
+    [[ ! -d /etc/ppp/peers ]] && mkdir -p /etc/ppp/peers
+
+    cat > "$peer_file" << NETCFGEOF
+$MODEM $BAUD
+noauth
+noproxyarp
+name $PEER
+linkname $PEER
+usepeerdns
+noipdefault
+defaultroute
+updetach
+child-timeout $PPP_TIMEOUT
+connect "/usr/sbin/chat -t15 -f $chat_script"
+NETCFGEOF
+}
 
 ppp_up() {
     load_profile "$1"
-    [[ -z "$PEER" ]] && PEER="provider"
+    [[ -z "$PEER" ]] && PEER="$1"
     [[ -z "$PPP_TIMEOUT" ]] && PPP_TIMEOUT=30
+    [[ -z "$CONNECT_TIMEOUT" ]] && PPP_TIMEOUT=30
 
-    /usr/sbin/pppd call "$PEER" updetach child-timeout "$PPP_TIMEOUT" linkname "$PEER"
+    if [ "$CONFIG" == "managed" ]; then
+        make_ppp_config
+    fi
+
+    /usr/sbin/pppd call "$PEER"
 
     if [[ $? -ne 0 ]]; then
        report_fail "Couldn't make pppd connection."
@@ -17,6 +65,11 @@ ppp_up() {
 
 ppp_down() {
     load_profile "$1"
+    [[ -z "$PEER" ]] && PEER="$1"
+    if [ "$CONFIG" == "managed" ]; then
+        rm -f "/etc/ppp/chatscripts/$PEER" > /dev/null 2>&1
+        rm -f "/etc/ppp/peers/$PEER" > /dev/null 2>&1
+    fi
     kill "$(head -1 "/var/run/ppp-$(basename $PEER).pid")"
 }
 
